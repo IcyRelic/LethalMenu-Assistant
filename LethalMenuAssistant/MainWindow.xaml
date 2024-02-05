@@ -14,6 +14,7 @@
     BorderThickness="3"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
+    Topmost="True"
     Title="LethalMenu Assistant" Height="450" Width="800">
 
     <Window.Resources>
@@ -22,9 +23,20 @@
         <local:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter" />
         <local:InvertBoolToStringConverter x:Key="InvertBoolToStringConverter" />
     </Window.Resources>
-    
+
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
+            <Button Click="LaunchDonate" Content="Donate">
+                <Button.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconVaadinIcons VerticalAlignment="Center" Kind="PiggyBank" />
+                            <TextBlock Margin="4 0 0 0" VerticalAlignment="Center" Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Button.ContentTemplate>
+            </Button>
+            
             <Button Click="LaunchGithub" Content="Github">
                 <Button.ContentTemplate>
                     <DataTemplate>
@@ -105,12 +117,12 @@
 
                                     <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="12" Margin="0 0 0 5" Header="How does it work?"/>
                                     <TextBlock TextWrapping="Wrap">
-                LethalMenu Assistant will aid you in the installation and usage of LethalMenu. It will automatically detect if LethalCompany is installed and running, and will allow you to inject LethalMenu into LethalCompany.
+                LethalMenu Assistant will aid you in the installation and usage of LethalMenu. It will automatically detect if Lethal Company is installed and running, and will allow you to inject LethalMenu into Lethal Company.
                                     </TextBlock>
 
                                     <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="12" Margin="0 10 0 5" Header="What is Auto Injection?"/>
                                     <TextBlock TextWrapping="Wrap">
-                If LethalMenu Assistant detects your LethalCompany installation with the click of a button you can both launch Lethal Company and inject LethalMenu.
+                If LethalMenu Assistant detects your Lethal Company installation with the click of a button you can both launch Lethal Company and inject LethalMenu.
                                     </TextBlock>
                                     <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="12" Margin="0 10 0 5" Header="What is Manual Injection?"/>
                                     <TextBlock TextWrapping="Wrap">
@@ -136,7 +148,7 @@
                             </StackPanel>
                         </Grid>
                     </ScrollViewer>
-                    
+
                 </TabItem.Content>
             </TabItem>
 
@@ -158,21 +170,38 @@
                             <ColumnDefinition />
 
                         </Grid.ColumnDefinitions>
-                        
+
                         <StackPanel Grid.Column="0" Orientation="Vertical">
-                                                    
+
                             <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 0 0 5" Header="Auto Injection"/>
 
                             <StackPanel Name="AutoInjectNoLCPanel" Visibility="{Binding Path=FoundLC, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
-                                
+
                                 <TextBlock TextWrapping="Wrap" Text="Lethal Company Folder Not Found! Please Manually Select the folder."/>
 
                             </StackPanel>
 
 
                             <StackPanel Name="AutoInjectPanel" Visibility="{Binding Path=FoundLC, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <TextBlock TextWrapping="Wrap" Text="Automatically open Lethal Company and Auto-Inject (10 Second Delay)"/>
-                                <Button Margin="0 20 0 0" Content="Auto Inject" Name="AutoInjectBtn" IsEnabled="{Binding Path=CanAutoInject}" Click="AutoInject"></Button>
+                                <TextBlock TextWrapping="Wrap">
+                                    Automatically open Lethal Company and Auto-Inject (<Run Text="{Binding Path=Value, ElementName=AutoInjectDelayNumeric}" /> Seccond Delay)
+                                </TextBlock>
+
+
+
+                                <Grid Margin="0 20 0 0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="0.3*" />
+                                        <ColumnDefinition />
+                                        
+
+
+                                    </Grid.ColumnDefinitions>
+                                    <mah:NumericUpDown Name="AutoInjectDelayNumeric" ValueChanged="AutoInjectDelayChanged"  Margin="0 0 10 0" Grid.Column="0" PreviewTextInput="AutoInjectDelayPreview" Maximum="60" Minimum="10" Interval="5" />
+                                    <Button Margin="10 0 0 0" Grid.Column="1" Content="Auto Inject" Name="AutoInjectBtn" IsEnabled="{Binding Path=CanAutoInject}" Click="AutoInject"></Button>
+                                </Grid>
+
+                                    
                             </StackPanel>
 
                             <StackPanel Name="ManualInjectPanel">
@@ -180,7 +209,7 @@
 
                                 <StackPanel>
                                     <TextBlock TextWrapping="Wrap"
-                                               Text="Inject LethalMenu when LethalCompany is already running."/>
+                                               Text="Inject LethalMenu when Lethal Company is already running."/>
                                     <Button Name="ManualInjectBtn" Margin="0 20 0 0" Content="Inject" IsEnabled="{Binding Path=CanInject}" Click="Inject"/>
                                 </StackPanel>
                             </StackPanel>
@@ -192,18 +221,18 @@
                             <StackPanel>
                                 <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 0 0 5" Header="LethalMenu Version"/>
 
-                                <ComboBox Name="LMVersionSelect" />
+                                <ComboBox Name="LMVersionSelect" SelectionChanged="VersionSelected" />
 
 
 
                             </StackPanel>
-                            
-                            
+
+
                             <StackPanel Margin="0 20 0 0">
                                 <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 0 0 5" Header="Lethal Company"/>
 
                                 <StackPanel Name="LCNotFoundPanel" Visibility="{Binding Path=FoundLC, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
-                                    <TextBlock TextWrapping="Wrap" Text="LethalCompany not found, please select the path to the LethalCompany folder."/>
+                                    <TextBlock TextWrapping="Wrap" Text="Lethal Company not found, please select the path to the Lethal Company folder."/>
                                     <Button  Margin="0 20 0 0" Content="Select Lethal Company Folder" Click="FindLCFolder"/>
                                 </StackPanel>
 
@@ -217,7 +246,7 @@
                                     <Button Margin="10 0 0 0" Grid.Column="1" Content="Launch" Click="LaunchLethalCompany" IsEnabled="{Binding Path=LCRunning, Converter={StaticResource InvertBoolConverter}}"/>
                                 </Grid>
                             </StackPanel>
-                            
+
 
                         </StackPanel>
                     </Grid>
@@ -246,9 +275,9 @@
         <StatusBar Grid.Row="1">
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
-                    <StatusBarItem>LethalCompany:</StatusBarItem>
+                    <StatusBarItem>Lethal Company:</StatusBarItem>
                     <StatusBarItem>
-                        <TextBlock Text="{Binding LCStatus}" />
+                        <TextBlock Name="LCStatusText" Text="{Binding LCStatus}" />
                     </StatusBarItem>
                 </StackPanel>
             </StatusBarItem>
@@ -257,7 +286,7 @@
                 <StackPanel Orientation="Horizontal">
                     <StatusBarItem>LethalMenu:</StatusBarItem>
                     <StatusBarItem>
-                        <TextBlock Text="{Binding LMStatus}" />
+                        <TextBlock Name="LMStatusText" Text="{Binding LMStatus}" />
                     </StatusBarItem>
                 </StackPanel>
             </StatusBarItem>

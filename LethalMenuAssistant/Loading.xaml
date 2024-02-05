@@ -13,7 +13,7 @@
     Icon="\images\icon.ico"
     BorderBrush="{DynamicResource MahApps.Brushes.Accent}"
     BorderThickness="3"
-    ResizeMode="CanResize"
+    ResizeMode="NoResize"
     ShowTitleBar="False"
     ShowCloseButton="False"
     ShowMinButton="False"

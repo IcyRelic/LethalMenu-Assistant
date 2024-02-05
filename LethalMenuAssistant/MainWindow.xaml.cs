@@ -31,12 +31,11 @@ namespace LethalMenuAssistant
         public string Changelog { get { return String.Join("\n", LMAssistant.changelog); } }
 
 
-
         public MainWindow()
         {
             DataContext = this;
             InitializeComponent();
-            SetupVersionSelect();
+            SetupControls();
 
 
             _ = UpdateBindingsTask();
@@ -59,6 +58,8 @@ namespace LethalMenuAssistant
             StackPanel lcNotFoundPanel = (StackPanel)FindName("LCNotFoundPanel");
             Button manualInjectBtn = (Button)FindName("ManualInjectBtn");
             Button autoInjectBtn = (Button)FindName("AutoInjectBtn");
+            TextBlock lcStatus = (TextBlock)FindName("LCStatusText");
+            TextBlock lmStatus = (TextBlock)FindName("LMStatusText");
 
             autoInject.GetBindingExpression(StackPanel.VisibilityProperty).UpdateTarget();
             autoInjectNoLC.GetBindingExpression(StackPanel.VisibilityProperty).UpdateTarget();
@@ -66,15 +67,26 @@ namespace LethalMenuAssistant
             lcNotFoundPanel.GetBindingExpression(StackPanel.VisibilityProperty).UpdateTarget();
             manualInjectBtn.GetBindingExpression(Button.IsEnabledProperty).UpdateTarget();
             autoInjectBtn.GetBindingExpression(Button.IsEnabledProperty).UpdateTarget();
-            
+            lcStatus.GetBindingExpression(TextBlock.TextProperty).UpdateTarget();
+            lmStatus.GetBindingExpression(TextBlock.TextProperty).UpdateTarget();
         }
 
-        private void SetupVersionSelect()
+        private void SetupControls()
         {
             ComboBox cb = (ComboBox)FindName("LMVersionSelect");
             cb.Items.Add("Latest");
-            LMAssistant.versions.ForEach(v => cb.Items.Add(v));
-            cb.SelectedIndex = 0;
+            
+            LMAssistant.versions.ForEach(v =>
+            {
+                cb.Items.Add(v);
+                if(v.Equals(Settings.Default.LMVersion)) cb.SelectedItem = v;
+
+            });
+            
+            if(cb.SelectedItem == null) cb.SelectedItem = "Latest";
+
+            NumericUpDown nud = (NumericUpDown)FindName("AutoInjectDelayNumeric");
+            nud.Value = Settings.Default.AutoInjectDelay;
         }
 
         private string GetSelectedVersionURL()
@@ -102,6 +114,11 @@ namespace LethalMenuAssistant
         private void LaunchUC(object sender, RoutedEventArgs e)
         {
             Process.Start(new ProcessStartInfo("https://www.unknowncheats.me/forum/lethal-company/615575-lethal-menu-lethal-company-cheat.html") { UseShellExecute = true });
+        }
+
+        public void LaunchDonate(object sender, RoutedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo("https://buymeacoffee.com/icyrelic") { UseShellExecute = true });
         }
 
         private void LaunchLethalCompany(object sender, RoutedEventArgs e)
@@ -132,6 +149,26 @@ namespace LethalMenuAssistant
                 }
                 else MessageBox.Show("Lethal Company.exe Not Found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void AutoInjectDelayPreview(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void AutoInjectDelayChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
+        {
+            Console.WriteLine(e.NewValue);
+            Settings.Default.AutoInjectDelay = (int) e.NewValue;
+            Settings.Default.Save();
+        }
+
+        private void VersionSelected(object sender, SelectionChangedEventArgs e)
+        {
+            Console.WriteLine(((ComboBox)sender).SelectedItem.ToString());
+            Settings.Default.LMVersion = ((ComboBox)sender).SelectedItem.ToString();
+            
+            Settings.Default.Save();
         }
 
         private void Inject(object sender, RoutedEventArgs e)
@@ -168,7 +205,8 @@ namespace LethalMenuAssistant
         private async Task AutoInject()
         {
             LaunchLC();
-            await Task.Delay(10000);
+
+            await Task.Delay((int) ((NumericUpDown)FindName("AutoInjectDelay")).Value * 1000);
             Inject();
             Injected = true;
             UpdateBindings();

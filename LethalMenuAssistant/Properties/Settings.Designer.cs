@@ -34,5 +34,29 @@ namespace LethalMenuAssistant.Properties {
                 this["LCPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("15")]
+        public int AutoInjectDelay {
+            get {
+                return ((int)(this["AutoInjectDelay"]));
+            }
+            set {
+                this["AutoInjectDelay"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LMVersion {
+            get {
+                return ((string)(this["LMVersion"]));
+            }
+            set {
+                this["LMVersion"] = value;
+            }
+        }
     }
 }
