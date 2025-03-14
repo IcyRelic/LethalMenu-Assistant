@@ -1,34 +1,54 @@
-﻿
-using LethalMenuAssistant;
-using LethalMenuAssistant.Properties;
-using LMAssistantLib;
-using LMInjector;
+﻿using DarkByteLauncher.Properties;
+using DarkByteLib;
+using DarkByteInjector;
 using MahApps.Metro.Controls;
 using Microsoft.Win32;
-using Newtonsoft.Json.Linq;
+using System.Collections;
+using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+using System.Configuration;
+using DarkByteLauncher.Commands;
+using System.Windows.Media;
+using System.Windows.Documents;
+using System.Windows.Data;
+using System.Windows.Shapes;
 
 
-namespace LethalMenuAssistant
+namespace DarkByteLauncher
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : MetroWindow
     {
-        public bool CanInject { get => LCRunning && !Injected && !AutoInjectStarted; }
-        public bool CanAutoInject { get => FoundLC && !Injected && !LCRunning && !AutoInjectStarted; }
-        public bool LCRunning { get { return GetLethalCompanyProcess() != null; } }
-        public bool FoundLC { get => Steam.HasLCPath(); }
+
+        public Game SelectedGame { get; set; } = DarkByte.Games[0];
+        public ObservableCollection<GameMenuItemModel> MenuItems { get; set; } = new ObservableCollection<GameMenuItemModel>();
+        public bool CanInject { get => SelectedGame.IsRunning && !Injected && !AutoInjectStarted; }
+        public bool CanAutoInject { get => SelectedGame.HasExecutable && !Injected && !SelectedGame.IsRunning && !AutoInjectStarted; }
+
+
         public bool Injected { get; set; } = false;
         public bool AutoInjectStarted { get; set; } = false;
-        public string LCStatus { get { return LCRunning ? "Running" : "Not Running"; } }
-        public string LMStatus { get { return Injected ? "Injected" : AutoInjectStarted ? "Injecting..." : "Ejected"; } }
-        public string Changelog { get { return String.Join("\n", LMAssistant.changelog); } }
+
+        public string MenuStatus { get { return Injected ? "Injected" : AutoInjectStarted ? "Injecting..." : "Ejected"; } }
+
+        public bool IsSidebarOpen { get; set; }
+
+        public string LauncherHomeText { get => DarkByte.LauncherHomeText; }
+
+        private void ToggleSidebar(object sender, RoutedEventArgs e)
+        {
+            IsSidebarOpen = !IsSidebarOpen;
+            UpdateBindings();
+        }
+
 
 
         public MainWindow()
@@ -52,58 +72,110 @@ namespace LethalMenuAssistant
 
         private void UpdateBindings()
         {
-            StackPanel autoInject = (StackPanel)FindName("AutoInjectPanel");
-            StackPanel autoInjectNoLC = (StackPanel)FindName("AutoInjectNoLCPanel");
-            Grid lcFoundPanel = (Grid)FindName("LCFoundPanel");
-            StackPanel lcNotFoundPanel = (StackPanel)FindName("LCNotFoundPanel");
-            Button manualInjectBtn = (Button)FindName("ManualInjectBtn");
-            Button autoInjectBtn = (Button)FindName("AutoInjectBtn");
-            TextBlock lcStatus = (TextBlock)FindName("LCStatusText");
-            TextBlock lmStatus = (TextBlock)FindName("LMStatusText");
+            FindVisualChildren<TextBlock>(this).ToList().ForEach(x =>
+            {
+                x.GetBindingExpression(TextBlock.TextProperty)?.UpdateTarget();
 
-            autoInject.GetBindingExpression(StackPanel.VisibilityProperty).UpdateTarget();
-            autoInjectNoLC.GetBindingExpression(StackPanel.VisibilityProperty).UpdateTarget();
-            lcFoundPanel.GetBindingExpression(Grid.VisibilityProperty).UpdateTarget();
-            lcNotFoundPanel.GetBindingExpression(StackPanel.VisibilityProperty).UpdateTarget();
-            manualInjectBtn.GetBindingExpression(Button.IsEnabledProperty).UpdateTarget();
-            autoInjectBtn.GetBindingExpression(Button.IsEnabledProperty).UpdateTarget();
-            lcStatus.GetBindingExpression(TextBlock.TextProperty).UpdateTarget();
-            lmStatus.GetBindingExpression(TextBlock.TextProperty).UpdateTarget();
+                x.Inlines.OfType<Run>().ToList().ForEach(y =>
+                {
+                    BindingExpression bindingExpression = BindingOperations.GetBindingExpression(y, Run.TextProperty);
+                    if (bindingExpression != null) bindingExpression.UpdateTarget();
+                });
+            });
+            FindVisualChildren<Panel>(this).ToList().ForEach(x =>
+            {
+                if (x.GetBindingExpression(Panel.VisibilityProperty) == null) return;
+                
+                x.GetBindingExpression(Panel.VisibilityProperty)?.UpdateTarget();
+            });
+
+            FindVisualChildren<Button>(this).ToList().ForEach(x =>
+            {
+                x.GetBindingExpression(Button.IsEnabledProperty)?.UpdateTarget();
+            });
+
+            FindVisualChildren<Run>(this).ToList().ForEach(x =>
+            {
+                
+                BindingExpression bindingExpression = BindingOperations.GetBindingExpression(x, Run.TextProperty);
+                bindingExpression?.UpdateTarget();
+            });
+
+            ((Flyout)FindName("SidebarFlyout")).GetBindingExpression(Flyout.IsOpenProperty).UpdateTarget();
+        }
+
+        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
+        {
+            if (parent == null) yield break;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T tChild)
+                    yield return tChild;
+
+                foreach (var descendant in FindVisualChildren<T>(child))
+                    yield return descendant;
+            }
+        }
+
+        private void SetupVersionSelect()
+        {
+            ComboBox cb = (ComboBox)FindName("GameVersionSelect");
+            cb.SelectedItem = null;
+            cb.Items.Clear();
+            cb.Items.Add("Latest");
+
+            SelectedGame.Versions.ForEach(v =>
+            {
+                cb.Items.Add(v);
+                //if(v.Equals(Settings.Default.LMVersion)) cb.SelectedItem = v;
+
+            });
+
+            if (cb.SelectedItem == null) cb.SelectedItem = "Latest";
         }
 
         private void SetupControls()
         {
-            ComboBox cb = (ComboBox)FindName("LMVersionSelect");
-            cb.Items.Add("Latest");
-            
-            LMAssistant.versions.ForEach(v =>
-            {
-                cb.Items.Add(v);
-                if(v.Equals(Settings.Default.LMVersion)) cb.SelectedItem = v;
-
-            });
-            
-            if(cb.SelectedItem == null) cb.SelectedItem = "Latest";
-
+            SetupVersionSelect();
             NumericUpDown nud = (NumericUpDown)FindName("AutoInjectDelayNumeric");
             nud.Value = Settings.Default.AutoInjectDelay;
+
+            DarkByte.Games.ForEach(g =>
+            {
+                MenuItems.Add(
+                    new GameMenuItemModel { 
+                        Game = g,
+                        Command = new RelayCommand(_ =>
+                        {
+                            SelectedGame = g;
+                            IsSidebarOpen = false;
+                            UpdateBindings(); 
+                            SetupVersionSelect();
+                        } )
+                    }
+                );
+            });
         }
 
         private string GetSelectedVersionURL()
         {
-            ComboBox cb = (ComboBox)FindName("LMVersionSelect");
+            ComboBox cb = (ComboBox)FindName("GameVersionSelect");
             
             string urlBase = "https://icyrelic.com/release/lethalmenu/";
             string selected = cb.SelectedItem.ToString();
-
-            string url = selected.ToLower().Equals("latest") ? $"{urlBase}LethalMenu.dll" : $"{urlBase}LethalMenu_{selected.Replace(".", "_")}.dll";
             
-            Console.WriteLine(url);
+
+            string url = selected.ToLower().Equals("latest") ? $"{urlBase}{SelectedGame.DownloadSettings.DLLFileName}.dll" : $"{urlBase}{SelectedGame.DownloadSettings.DLLFileName}_{selected.Replace(".", "_")}.dll";
+            
+            Debug.WriteLine(url);
             return url;
         }   
         private void LaunchGithub(object sender, RoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo("https://github.com/IcyRelic/LethalMenu") { UseShellExecute = true } );
+            if (String.IsNullOrEmpty(SelectedGame.GitHubURL)) return;
+            Process.Start(new ProcessStartInfo(SelectedGame.GitHubURL) { UseShellExecute = true } );
         }
 
         private void LaunchDiscord(object sender, RoutedEventArgs e)
@@ -113,25 +185,16 @@ namespace LethalMenuAssistant
 
         private void LaunchUC(object sender, RoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo("https://www.unknowncheats.me/forum/lethal-company/615575-lethal-menu-lethal-company-cheat.html") { UseShellExecute = true });
+            if (String.IsNullOrEmpty(SelectedGame.UnknownCheatsURL)) return;
+            Process.Start(new ProcessStartInfo(SelectedGame.UnknownCheatsURL) { UseShellExecute = true });
         }
 
-        public void LaunchDonate(object sender, RoutedEventArgs e)
+        private void OpenGameFolder(object sender, RoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo("https://buymeacoffee.com/icyrelic") { UseShellExecute = true });
+            Process.Start("explorer.exe", SelectedGame.SteamInstallFolder);
         }
 
-        private void LaunchLethalCompany(object sender, RoutedEventArgs e)
-        {
-            LaunchLC();
-        }
-
-        private void OpenLCFolder(object sender, RoutedEventArgs e)
-        {
-            Process.Start("explorer.exe", Steam.LCFolder);
-        }
-
-        public void FindLCFolder(object sender, RoutedEventArgs e)
+        public void FindGameFolder(object sender, RoutedEventArgs e)
         {
             OpenFolderDialog ofd = new OpenFolderDialog();
             var result = ofd.ShowDialog(this);
@@ -139,19 +202,19 @@ namespace LethalMenuAssistant
             if (result == true)
             {
                 string path = ofd.FolderName;
-                bool valid = Steam.SetLCPath(path);
+                bool valid = SelectedGame.SetExecutable(path);
 
                 if(valid)
                 {
-                    Settings.Default.LCPath = path;
-                    Settings.Default.Save();
+                    //Settings.Default.LCPath = path;
+                    //Settings.Default.Save();
                     UpdateBindings();
                 }
-                else MessageBox.Show("Lethal Company.exe Not Found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                else MessageBox.Show($"{SelectedGame.ProcessName} Not Found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void AutoInjectDelayPreview(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        private void AutoInjectDelayPreview(object sender, TextCompositionEventArgs e)
         {
             e.Handled = true;
         }
@@ -165,11 +228,15 @@ namespace LethalMenuAssistant
 
         private void VersionSelected(object sender, SelectionChangedEventArgs e)
         {
+            if (((ComboBox)sender).SelectedItem == null) return;
             Console.WriteLine(((ComboBox)sender).SelectedItem.ToString());
-            Settings.Default.LMVersion = ((ComboBox)sender).SelectedItem.ToString();
-            
+            //Settings.Default.LMVersion = ((ComboBox)sender).SelectedItem.ToString();
+
             Settings.Default.Save();
         }
+
+        private void TabSelected(object sender, SelectionChangedEventArgs e) => UpdateBindings();
+
 
         private void Inject(object sender, RoutedEventArgs e)
         {
@@ -177,7 +244,7 @@ namespace LethalMenuAssistant
             Inject();
             Injected = true;
             UpdateBindings();
-            MessageBox.Show("Injected LethalMenu", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show($"Injected {SelectedGame.DownloadSettings.DLLFileName}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             Close();
         }
 
@@ -190,7 +257,7 @@ namespace LethalMenuAssistant
 
         private IntPtr Inject()
         {
-            Process? p = GetLethalCompanyProcess();
+            Process? p = SelectedGame.GetProcess() ;
             if (p == null) return IntPtr.Zero;
 
             Injector injector = new Injector(p);
@@ -198,29 +265,35 @@ namespace LethalMenuAssistant
             string url = GetSelectedVersionURL();
 
             var data = client.GetByteArrayAsync(url).Result;
-            
-            return injector.Inject(data, "LethalMenu", "Loader", "Init");
+
+            return injector.Inject(data, SelectedGame.InjectionSettings.Namespace, SelectedGame.InjectionSettings.Class, SelectedGame.InjectionSettings.Method);
         }
 
         private async Task AutoInject()
         {
-            LaunchLC();
+            LaunchGame();
 
             await Task.Delay((int) ((NumericUpDown)FindName("AutoInjectDelay")).Value * 1000);
             Inject();
             Injected = true;
             UpdateBindings();
-            MessageBox.Show("Auto-Injected LethalMenu", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show($"Auto-Injected {SelectedGame.DownloadSettings.DLLFileName}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             Close();
         }
-        private void LaunchLC()
+        private void LaunchGame(object sender = null, RoutedEventArgs e = null)
         {
-            if (LCRunning) return;
+            if (SelectedGame.IsRunning) return;
 
-            if (Steam.FoundWithSteam) Process.Start(new ProcessStartInfo($"steam://rungameid/{Steam.LC_APPID}") { UseShellExecute = true });
-            else Process.Start(Steam.LCExecutable);
+            if (SelectedGame.FoundSteamInstall) Process.Start(new ProcessStartInfo($"steam://rungameid/{SelectedGame.GameID}") { UseShellExecute = true });
+            else Process.Start(SelectedGame.GameExe);
         }
-        private static Process? GetLethalCompanyProcess() => Process.GetProcesses().Where(p => p.ProcessName == "Lethal Company").FirstOrDefault();
+    }
+
+    public class GameMenuItemModel
+    {
+        public Game Game { get; set; }
+        public ICommand Command { get; set; }
+        public BitmapImage IconImage => DarkByte.Base64ToImage(Game.IconBase64);
     }
 
 }

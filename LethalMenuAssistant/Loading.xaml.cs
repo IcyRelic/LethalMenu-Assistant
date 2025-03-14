@@ -1,7 +1,7 @@
 ﻿using MahApps.Metro.Controls;
 using System.Windows;
 
-namespace LethalMenuAssistant
+namespace DarkByteLauncher
 {
     /// <summary>
     /// Interaction logic for Loading.xaml
@@ -17,7 +17,7 @@ namespace LethalMenuAssistant
 
         private void MetroWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            _ = LMAssistant.Init();
+            _ = DarkByte.Init();
         }
 
     }

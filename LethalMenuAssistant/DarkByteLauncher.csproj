@@ -53,8 +53,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LMAssistantLib\LMAssistantLib.csproj" />
-    <ProjectReference Include="..\LMInjector\LMInjector.csproj" />
+    <ProjectReference Include="..\LMAssistantLib\DarkByteLib.csproj" />
+    <ProjectReference Include="..\LMInjector\DBInjector.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿namespace LMInjector
+﻿namespace DarkByteInjector
 {
     public class Assembler
     {

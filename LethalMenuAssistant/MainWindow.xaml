@@ -1,12 +1,12 @@
 ﻿<mah:MetroWindow 
-    x:Class="LethalMenuAssistant.MainWindow"
+    x:Class="DarkByteLauncher.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-    xmlns:local="clr-namespace:LethalMenuAssistant"
+    xmlns:local="clr-namespace:DarkByteLauncher"
     mc:Ignorable="d"
     TitleCharacterCasing="Normal"
     Icon="\images\icon.ico"
@@ -15,7 +15,7 @@
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     Topmost="True"
-    Title="LethalMenu Assistant" Height="450" Width="800">
+    Title="DarkByte Launcher" Height="450" Width="800">
 
     <Window.Resources>
         <local:InvertBoolConverter x:Key="InvertBoolConverter" />
@@ -23,36 +23,39 @@
         <local:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter" />
         <local:InvertBoolToStringConverter x:Key="InvertBoolToStringConverter" />
     </Window.Resources>
-
+    <mah:MetroWindow.LeftWindowCommands>
+        <mah:WindowCommands>
+            <Button Click="ToggleSidebar" Content="{Binding SelectedGame.GameName}">
+                <Button.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconVaadinIcons VerticalAlignment="Center" Kind="Lines" />
+                            <TextBlock Margin="4 0 0 0" VerticalAlignment="Center" Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Button.ContentTemplate>
+            </Button>
+        </mah:WindowCommands>
+    </mah:MetroWindow.LeftWindowCommands>
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
-            <Button Click="LaunchDonate" Content="Donate">
-                <Button.ContentTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconVaadinIcons VerticalAlignment="Center" Kind="PiggyBank" />
-                            <TextBlock Margin="4 0 0 0" VerticalAlignment="Center" Text="{Binding}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </Button.ContentTemplate>
-            </Button>
-            
-            <Button Click="LaunchGithub" Content="Github">
-                <Button.ContentTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconModern VerticalAlignment="Center" Kind="SocialGithubOctocat" />
-                            <TextBlock Margin="4 0 0 0" VerticalAlignment="Center" Text="{Binding}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </Button.ContentTemplate>
-            </Button>
 
             <Button Click="LaunchDiscord" Content="Discord">
                 <Button.ContentTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconBootstrapIcons VerticalAlignment="Center" Kind="Discord" />
+                            <TextBlock Margin="4 0 0 0" VerticalAlignment="Center" Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Button.ContentTemplate>
+            </Button>
+
+            <Button Click="LaunchGithub" Content="Github">
+                <Button.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconModern VerticalAlignment="Center" Kind="SocialGithubOctocat" />
                             <TextBlock Margin="4 0 0 0" VerticalAlignment="Center" Text="{Binding}" />
                         </StackPanel>
                     </DataTemplate>
@@ -72,6 +75,37 @@
         </mah:WindowCommands>
     </mah:MetroWindow.RightWindowCommands>
 
+    <mah:MetroWindow.Flyouts>
+        <mah:FlyoutsControl>
+            <mah:Flyout x:Name="SidebarFlyout"
+                        Header="Game Selection"
+                        Position="Left"
+                        IsOpen="{Binding IsSidebarOpen, Mode=TwoWay}"
+                        CloseButtonVisibility="Visible">
+                <ItemsControl ItemsSource="{Binding MenuItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding Command}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    HorizontalContentAlignment="Left"
+                                    Padding="10"
+                                    Margin="2">
+                                <StackPanel Orientation="Horizontal">
+                                    <!-- Base64 Image -->
+                                    <Image Source="{Binding IconImage}" 
+                                           Width="24" Height="24" 
+                                           Margin="0,0,10,0"/>
+                                    <!-- Menu Item Text -->
+                                    <TextBlock Text="{Binding Game.GameName}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </mah:Flyout>
+        </mah:FlyoutsControl>
+    </mah:MetroWindow.Flyouts>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -81,8 +115,9 @@
 
         </Grid.RowDefinitions>
 
+   
 
-        <mah:MetroAnimatedTabControl Grid.Row="0">
+        <mah:MetroAnimatedTabControl Grid.Row="0" SelectionChanged="TabSelected">
 
             <TabItem  HorizontalAlignment="Center" VerticalAlignment="Bottom">
                 <TabItem.HeaderTemplate>
@@ -95,60 +130,8 @@
                 </TabItem.HeaderTemplate>
                 <TabItem.Content>
                     <ScrollViewer>
-                        <Grid Margin="10">
-                            <Grid.ColumnDefinitions>
-
-                                <ColumnDefinition Width="1.4*"/>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition />
-
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" Orientation="Vertical">
-                                <StackPanel>
-                                    <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 0 0 5" Header="Welcome To LethalMenu Assistant"/>
-                                    <TextBlock TextWrapping="Wrap">
-                LethalMenu Assistant was created to help users with the installation and usage of LethalMenu.
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <StackPanel Margin="0 20 0 0">
-                                    <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 0 0 5" Header="Getting Started"/>
-
-                                    <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="12" Margin="0 0 0 5" Header="How does it work?"/>
-                                    <TextBlock TextWrapping="Wrap">
-                LethalMenu Assistant will aid you in the installation and usage of LethalMenu. It will automatically detect if Lethal Company is installed and running, and will allow you to inject LethalMenu into Lethal Company.
-                                    </TextBlock>
-
-                                    <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="12" Margin="0 10 0 5" Header="What is Auto Injection?"/>
-                                    <TextBlock TextWrapping="Wrap">
-                If LethalMenu Assistant detects your Lethal Company installation with the click of a button you can both launch Lethal Company and inject LethalMenu.
-                                    </TextBlock>
-                                    <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="12" Margin="0 10 0 5" Header="What is Manual Injection?"/>
-                                    <TextBlock TextWrapping="Wrap">
-                This feature is for users who already have Lethal Company running and want to inject LethalMenu into it with a click of a button.
-                                    </TextBlock>
-                                </StackPanel>
-
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2" Orientation="Vertical">
-                                <StackPanel>
-                                    <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 0 0 5" Header="About"/>
-                                    <TextBlock TextWrapping="Wrap">Version: 1.0.0</TextBlock>
-                                    <TextBlock TextWrapping="Wrap">Developer: IcyRelic</TextBlock>
-                                </StackPanel>
-                                <StackPanel>
-                                    <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 20 0 5" Header="Contributing"/>
-                                    <TextBlock TextWrapping="Wrap">LethalMenu is community driven, We are always looking for suggestions and feedback. You can submit a github issue for any feature requests or bug reports. Pull Requests are also greatly appreciated.</TextBlock>
-                                    <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="12" Margin="0 10 0 5" Header="Language Translations"/>
-                                    <TextBlock TextWrapping="Wrap">We are always looking for translations for LethalMenu. We utilize crowdin to maintain all language translations, simply join the discord and we will get you setup and assist you with adding language support.</TextBlock>
-
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
+                        <TextBlock Margin="15" TextWrapping="Wrap" Text="{Binding LauncherHomeText}" />
                     </ScrollViewer>
-
                 </TabItem.Content>
             </TabItem>
 
@@ -175,16 +158,18 @@
 
                             <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 0 0 5" Header="Auto Injection"/>
 
-                            <StackPanel Name="AutoInjectNoLCPanel" Visibility="{Binding Path=FoundLC, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
+                            <StackPanel Name="AutoInjectNoPathPanel" Visibility="{Binding Path=SelectedGame.HasExecutable, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
 
-                                <TextBlock TextWrapping="Wrap" Text="Lethal Company Folder Not Found! Please Manually Select the folder."/>
+                                <TextBlock TextWrapping="Wrap">
+                                    <Run Text="{Binding Path=SelectedGame.GameName}" /> Folder Not Found! Please Manually Select the folder.
+                                </TextBlock>
 
                             </StackPanel>
 
 
-                            <StackPanel Name="AutoInjectPanel" Visibility="{Binding Path=FoundLC, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Name="AutoInjectPanel" Visibility="{Binding Path=SelectedGame.HasExecutable, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <TextBlock TextWrapping="Wrap">
-                                    Automatically open Lethal Company and Auto-Inject (<Run Text="{Binding Path=Value, ElementName=AutoInjectDelayNumeric}" /> Seccond Delay)
+                                    Automatically launch <Run Text="{Binding Path=SelectedGame.GameName}" /> and Auto-Inject (<Run Text="{Binding Path=Value, ElementName=AutoInjectDelayNumeric}" /> Second Delay)
                                 </TextBlock>
 
 
@@ -208,8 +193,9 @@
                                 <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 20 0 5" Header="Manual Injection"/>
 
                                 <StackPanel>
-                                    <TextBlock TextWrapping="Wrap"
-                                               Text="Inject LethalMenu when Lethal Company is already running."/>
+                                    <TextBlock TextWrapping="Wrap">
+                                        Inject <Run Text="{Binding Path=SelectedGame.DownloadSettings.DLLFileName}" /> when <Run Text="{Binding Path=SelectedGame.GameName}" /> is already running.
+                                    </TextBlock>
                                     <Button Name="ManualInjectBtn" Margin="0 20 0 0" Content="Inject" IsEnabled="{Binding Path=CanInject}" Click="Inject"/>
                                 </StackPanel>
                             </StackPanel>
@@ -219,9 +205,12 @@
 
                         <StackPanel Grid.Column="2" Orientation="Vertical">
                             <StackPanel>
-                                <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 0 0 5" Header="LethalMenu Version"/>
+                                <TextBlock FontSize="20" FontWeight="Bold" Margin="0 0 0 5" >
+                                    <Run Text="{Binding SelectedGame.GameName}" /> Version
+                                </TextBlock>
 
-                                <ComboBox Name="LMVersionSelect" SelectionChanged="VersionSelected" />
+
+                                <ComboBox Name="GameVersionSelect" SelectionChanged="VersionSelected" />
 
 
 
@@ -229,21 +218,29 @@
 
 
                             <StackPanel Margin="0 20 0 0">
-                                <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontWeight="Bold" mah:HeaderedControlHelper.HeaderFontSize="20" Margin="0 0 0 5" Header="Lethal Company"/>
+                                <TextBlock FontSize="20" FontWeight="Bold" Margin="0 0 0 5" >
+                                    <Run Text="{Binding SelectedGame.GameName}" />
+                                </TextBlock>
+                                <StackPanel Name="NotFoundPanel" Visibility="{Binding Path=SelectedGame.HasExecutable, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
+                                    <TextBlock TextWrapping="Wrap">
+                                        <Run Text="{Binding Path=SelectedGame.GameName}" /> not found, please select the path to the <Run Text="{Binding Path=SelectedGame.GameName}" /> folder.
+                                    </TextBlock>
+                                    <Button  Margin="0 20 0 0" Click="FindGameFolder">
+                                        <TextBlock TextWrapping="Wrap">
+                                            Select <Run Text="{Binding Path=SelectedGame.GameName}" /> Folder
+                                        </TextBlock>
+                                    </Button>
 
-                                <StackPanel Name="LCNotFoundPanel" Visibility="{Binding Path=FoundLC, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
-                                    <TextBlock TextWrapping="Wrap" Text="Lethal Company not found, please select the path to the Lethal Company folder."/>
-                                    <Button  Margin="0 20 0 0" Content="Select Lethal Company Folder" Click="FindLCFolder"/>
                                 </StackPanel>
 
-                                <Grid Name="LCFoundPanel" Visibility="{Binding Path=FoundLC, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Grid Name="FoundPanel" Visibility="{Binding Path=SelectedGame.HasExecutable, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
 
-                                    <Button Margin="0 0 10 0" Grid.Column="0" Content="Open Folder" Click="OpenLCFolder" />
-                                    <Button Margin="10 0 0 0" Grid.Column="1" Content="Launch" Click="LaunchLethalCompany" IsEnabled="{Binding Path=LCRunning, Converter={StaticResource InvertBoolConverter}}"/>
+                                    <Button Margin="0 0 10 0" Grid.Column="0" Content="Open Folder" Click="OpenGameFolder" />
+                                    <Button Margin="10 0 0 0" Grid.Column="1" Content="Launch" Click="LaunchGame" IsEnabled="{Binding Path=SelectedGame.IsRunning, Converter={StaticResource InvertBoolConverter}}"/>
                                 </Grid>
                             </StackPanel>
 
@@ -264,10 +261,13 @@
                 </TabItem.HeaderTemplate>
                 <TabItem.Content>
                     <ScrollViewer>
-                        <TextBlock Margin="15" TextWrapping="Wrap" Text="{Binding Changelog}"/>
+                        <TextBlock Margin="15" TextWrapping="Wrap" Name="ChaneLogText" Text="{Binding SelectedGame.ChangeLog}"/>
                     </ScrollViewer>
                 </TabItem.Content>
             </TabItem>
+            
+
+
 
         </mah:MetroAnimatedTabControl>
 
@@ -275,18 +275,20 @@
         <StatusBar Grid.Row="1">
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
-                    <StatusBarItem>Lethal Company:</StatusBarItem>
                     <StatusBarItem>
-                        <TextBlock Name="LCStatusText" Text="{Binding LCStatus}" />
+                        <TextBlock Name="StatusGameName" Text="{Binding SelectedGame.GameName, StringFormat='{}{0}:'}" /></StatusBarItem>
+                    <StatusBarItem>
+                        <TextBlock Name="GameStatusText" Text="{Binding SelectedGame.Status}" />
                     </StatusBarItem>
                 </StackPanel>
             </StatusBarItem>
 
             <StatusBarItem HorizontalAlignment="Right">
                 <StackPanel Orientation="Horizontal">
-                    <StatusBarItem>LethalMenu:</StatusBarItem>
                     <StatusBarItem>
-                        <TextBlock Name="LMStatusText" Text="{Binding LMStatus}" />
+                        <TextBlock Name="StatusMenuName" Text="{Binding SelectedGame.DownloadSettings.DLLFileName, StringFormat='{}{0}:'}" /></StatusBarItem>
+                    <StatusBarItem>
+                        <TextBlock Name="MenuStatusText" Text="{Binding MenuStatus}" />
                     </StatusBarItem>
                 </StackPanel>
             </StatusBarItem>

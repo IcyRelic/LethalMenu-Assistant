@@ -2,19 +2,16 @@
 using Gameloop.Vdf.JsonConverter;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
-namespace LMAssistantLib
+namespace DarkByteLib
 {
     public class Steam
     {
-        public const string LC_APPID = "1966720";
-        public static string LCFolder = string.Empty;
-        public static string LCExecutable = string.Empty;
-        public static bool FoundWithSteam = false;
 
-
-        public static bool TryFindLethalCompany()
+        public static bool TryFindGame(Game game)
         {
+            Debug.WriteLine("Trying to find game: " + game.GameName);
             string steam32 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\VALVE\\Steam";
             string steam64 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Valve\\Steam";
 
@@ -23,60 +20,36 @@ namespace LMAssistantLib
 
             bool found = false;
 
-            if (steamPath32 != null) found = FindLCInstall(steamPath32.ToString());
-            if (steamPath64 != null) found = FindLCInstall(steamPath64.ToString());
+            if (steamPath32 != null) found = FindInstall(steamPath32.ToString(), game);
+            if (steamPath64 != null) found = FindInstall(steamPath64.ToString(), game);
 
             return found;
         }
 
-        private static bool FindLCInstall(string steampath)
+        private static bool FindInstall(string steampath, Game game)
         {
             var configpath = steampath + "/steamapps/libraryfolders.vdf";
             var config = VdfConvert.Deserialize(File.ReadAllText(configpath));
-
             var json = config.ToJson();
-
             var obj = json.First?.ToObject<JObject>();
 
-   
 
             obj?.Values().ToList().ForEach(x =>
             {
-                if (x["apps"]?[LC_APPID] != null)
+                x["apps"]?.SelectTokens($"$.{game.GameID}").ToList().ForEach(y =>
                 {
-                    //Console.WriteLine("APP FOUND");
+                    string folder = $"{x["path"]}\\steamapps\\common\\{game.GameName}";
+                    string exe = $"{folder}\\{game.ProcessName}";
 
-                    string folder = $"{x["path"]}\\steamapps\\common\\Lethal Company";
-                    string exe = $"{folder}\\Lethal Company.exe";
-
-                    if(File.Exists(exe)) {
-                        LCFolder = folder;
-                        LCExecutable = exe;
-                        FoundWithSteam = true;
+                    if (File.Exists(exe))
+                    {
+                        game.SteamInstallFolder = folder;
+                        game.GameExe = exe;
+                        game.FoundSteamInstall = true;
                     }
-
-                }
+                });
             });
-
-            return !LCExecutable.Equals(string.Empty);
-        }
-
-        public static bool HasLCPath()
-        {
-            return !string.IsNullOrEmpty(LCExecutable) && File.Exists(LCExecutable);
-        }
-        public static bool SetLCPath(string folder)
-        {
-            string exe = $"{folder}\\Lethal Company.exe";
-
-            if(File.Exists(exe))
-            {
-                LCFolder = folder;
-                LCExecutable = exe;
-                return true;
-            }
-
-            return false;
+            return !string.IsNullOrEmpty(game.GameExe);
         }
     }
 }

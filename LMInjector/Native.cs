@@ -1,8 +1,8 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
-using static LMInjector.Memory;
+using static DarkByteInjector.Memory;
 
-namespace LMInjector
+namespace DarkByteInjector
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct MODULEINFO

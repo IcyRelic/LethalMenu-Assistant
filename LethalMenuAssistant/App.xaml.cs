@@ -1,9 +1,9 @@
-﻿using LethalMenuAssistant.Properties;
-using LMAssistantLib;
+﻿using DarkByteLauncher.Properties;
+using DarkByteLib;
 using System.IO;
 using System.Windows;
 
-namespace LethalMenuAssistant
+namespace DarkByteLauncher
 {
     /// <summary>
     /// Interaction logic for App.xaml
@@ -29,7 +29,7 @@ namespace LethalMenuAssistant
 
 
 
-            if (!Steam.HasLCPath() && !string.IsNullOrEmpty(Settings.Default.LCPath)) Steam.SetLCPath(Settings.Default.LCPath);
+            //if (!Steam.HasLCPath() && !string.IsNullOrEmpty(Settings.Default.LCPath)) Steam.SetLCPath(Settings.Default.LCPath);
 
             MainWindow mainWindow = new MainWindow();
             mainWindow.Show();
@@ -39,7 +39,7 @@ namespace LethalMenuAssistant
 
         private Task WaitForInitializationAsync()
         {
-            if (LMAssistant.Initialized)
+            if (DarkByte.Initialized)
             {
                 return Task.CompletedTask;
             }
@@ -49,7 +49,7 @@ namespace LethalMenuAssistant
             var checkTimer = new System.Timers.Timer(500);
             checkTimer.Elapsed += (sender, args) =>
             {
-                if (LMAssistant.Initialized)
+                if (DarkByte.Initialized)
                 {
                     checkTimer.Stop();
                     tcs.TrySetResult(null);

@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace LMInjector
+namespace DarkByteInjector
 {
     public struct ExportedFunction
     {
